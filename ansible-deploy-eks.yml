@@ -1,0 +1,47 @@
+- hosts: eks
+  tasks:
+    - name: Write Kubernetes deployment manifest
+      copy:
+        dest: ./deployment.yaml
+        content: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: flask-app
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: flask-app
+            template:
+              metadata:
+                labels:
+                  app: flask-app
+              spec:
+                containers:
+                - name: flask-app
+                  image: himanshu8090/ansible-eks-flask-app:latest
+                  ports:
+                  - containerPort: 80
+
+    - name: Write service manifest
+      copy:
+        dest: ./service.yaml
+        content: |
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: flask-service
+          spec:
+            type: LoadBalancer
+            selector:
+              app: flask-app
+            ports:
+            - port: 80
+              targetPort: 80
+
+    - name: Deploy app to EKS
+      shell: |
+        kubectl apply -f deployment.yaml
+        kubectl apply -f service.yaml
+
